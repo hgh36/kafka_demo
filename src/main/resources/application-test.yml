@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: 192.168.174.10:9092
+    producerNum: 5
+    producer:
+      retries: 2
+      batch-size: 16384
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 0
+      compression-type: gzip
+    consumer:
+      group-id: hello-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      auto-commit-interval: 100
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+server:
+  port: 9527

@@ -1,0 +1,48 @@
+spring:
+  kafka:
+    bootstrap-servers: 192.168.174.10:9092
+    producerNum: 5
+    producer:
+      # 当生产者发送消息收到一个可恢复异常时，会进行重试，这个参数指定了重试的次数。这个参数需要结合
+      # retry.backoff.ms(重试等待间隔)来使用。建议总的重试时间比集群重新选举leader时间长，这样可以避免重试失败。
+      retries: 2
+      #当多消息发送到一个分区时，生产者会进行批量发送，这个参数指定了批量发送的大小上上限(以字节为单位)，
+      #当批量消息达到大小时，生产者会一起发送到broker；但即使没达到这个大小，生产者也会有定时机制来发送消息，
+      #避免消息延迟过大。
+      #每次批量发送消息的数量 这里是16kb
+      batch-size: 16384
+      #这个参数设置生产者缓存发送的消息的内存大小，如果应用调用send方法的速度大于生成者发送的速度，那么调用会
+      #堵塞或者抛出异常，具体行为取决于block.on.buffer.full参数。
+      buffer-memory: 33554432
+      # 指定消息key和消息体的编解码方式
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      #acks控制多个副本必须写入消息后生产者才能认为写入成功，这个参数对消息丢失有很大影响。有3个配置：0、1、all
+      #acks=0:生产者把消息发送到broker即认为成功，不等待broker的处理结果。这种方式吞吐量最高，但是也最容易丢失消息。
+      #acks=1：生产者会区分leader写入消息并返回成功后，认为消息发送成功。如果leader写入消息失败，生产者会收到错误
+      #相应并重试。这种方式能一定程度避免消息丢失，但如果leader宕机时没有把消息复制到其他副本，那么消息还是会丢失，
+      #如果我们用同步方式来发送消息，延迟会比上一种大大增加。如果用异步方式发送消息，应用感知不到延迟，吞吐量则
+      #会受到正在发送中的数量限制。
+      #acks=all:生产者会等待所有副本成功写入消息，这种方式是最安全的，能保值消息不丢失，但是延迟也是最大的。
+      acks: 0
+      #默认情况下消息是不会被压缩的，这个参数可以指定使用消息压缩，参数为：snappy,gzip,lz4.
+      #snappy：该压缩算法由google研发，该算法在性能和压缩比有比较好的平衡。
+      #gzip：它消耗更多的cpu和内存资源，但它是压缩效果最好的。
+      compression-type: gzip
+    consumer:
+      # 指定默认消费者group id
+      group-id: hello-group
+      #偏移量设置：假如消费者长时间没有相应，偏移量已经无效的情况下。应做如何处理。
+      #默认值是：latest，从最新的消息读取记录，
+      #另一个是earliest，意思是在偏移量无效的情况下，从最开始的位置读取数据。
+      #none：如果边更早的offset也没有的话，就抛出异常给consumer，告诉consumer在整个consumer group中都没有发现有这样的offset。
+      auto-offset-reset: earliest
+      #指定了消费者是否自动提交偏移量，默认值是true。为了避免重复数据和数据丢失，可以把它设置为false，
+      #由自己控制合适提交偏移量，如果设置为true，可以设置auto.commit.interval.ms属性来控制提交频率。
+      enable-auto-commit: true
+      auto-commit-interval: 100
+      # 指定消息key和消息体的编解码方式 与上面的生成者不同
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+server:
+  port: 9527
